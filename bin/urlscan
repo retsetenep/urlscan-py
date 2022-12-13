@@ -8,7 +8,7 @@ import sqlite3
 
 
 ### urlscan's config directory
-urlscan_dir = str(pathlib.Path.home()) + '/.urlscan'
+urlscan_dir = str(pathlib.Path.home()) + '/.urlscan_manual'
 
 saved_scan_dir = urlscan_dir + '/saved_scans'
 
@@ -37,6 +37,7 @@ parser_scan.add_argument('-p', '--public', help='submit a public urlscan scan', 
 parser_scan.add_argument('-f', '--file', help='file with url(s) to scan')
 parser_scan.add_argument('-q', '--quiet', help='suppress output', action="store_true")
 parser_scan.add_argument('--api', help='urlscan API key', metavar='KEY')
+parser_scan.add_argument('-t', '--tags', help='tags for submission', nargs='+', metavar='TAGS', default='custom')
 
 ## Search parser
 parser_search = subparsers.add_parser('search', help='search database for UUID of url')
@@ -273,7 +274,7 @@ def save_to_dir(target_dir, save_template, r):
         with open(save_file_name, 'a') as out:
             out.write(r)
 
-def submit(url, urlscan_api, file, db, public, quiet):
+def submit(url, urlscan_api, file, db, public, quiet, tags):
     if file:
         urls_to_scan = [line.rstrip('\n') for line in open(file)]
     else:
@@ -290,16 +291,26 @@ def submit(url, urlscan_api, file, db, public, quiet):
             'API-Key': urlscan_api,
         }
 
+        data = ""
         if not public:
-            data = '{"url": "%s"}' % target_url
+            data = '"url": "%s"' % target_url
         else:
-            data = '{"url": "%s", "public": "on"}' % target_url
+            #data = '{"url": "%s", "public": "on"}' % target_url
+            #{"url": "sjathunder.org", "public": "on"}
+            data = '"url": "%s", "public": "on"' % target_url
 
+        if tags:
+            tag_string=''
+            for tag in tags:
+                tag_string += "\"" + tag + "\","
+            data += ', "tags": ['+tag_string[:-1]+']'
+        data = "{" + data + "}"
+        
         response = requests.post('https://urlscan.io/api/v1/scan/', headers=headers, data=data)
 
         # Support for errors or black-listed domains
         json_response = json.loads(response.text)
-
+        print(json_response)
         # Checks for API quota match or a different error
         if 'status' in json_response.keys():
             if json_response['status'] == 400:
@@ -385,7 +396,9 @@ def main():
 
     if args.command == 'scan':
         initialize()
-        submit(args.url, urlscan_api, args.file, args.db, args.public, args.quiet)
+        #submit(args.url, urlscan_api, args.file, args.db, args.public, args.quiet)
+        submit(args.url, urlscan_api, args.file, args.db, args.public, args.quiet, args.tags)
+        
 
     if args.command == 'search':
         search(args.url, args.web)
