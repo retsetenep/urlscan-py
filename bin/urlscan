@@ -295,8 +295,6 @@ def submit(url, urlscan_api, file, db, public, quiet, tags):
         if not public:
             data = '"url": "%s"' % target_url
         else:
-            #data = '{"url": "%s", "public": "on"}' % target_url
-            #{"url": "sjathunder.org", "public": "on"}
             data = '"url": "%s", "public": "on"' % target_url
 
         if tags:
