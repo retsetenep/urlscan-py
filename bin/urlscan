@@ -308,7 +308,7 @@ def submit(url, urlscan_api, file, db, public, quiet, tags):
 
         # Support for errors or black-listed domains
         json_response = json.loads(response.text)
-        print(json_response)
+
         # Checks for API quota match or a different error
         if 'status' in json_response.keys():
             if json_response['status'] == 400:
